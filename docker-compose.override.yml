@@ -1,0 +1,10 @@
+# Override file for local development
+# This file is automatically merged with docker-compose.yml
+
+services:
+  postgres:
+    command: postgres -c log_statement=all
+    
+  redis:
+    # Expose Redis CLI for debugging
+    command: redis-server --appendonly yes --loglevel debug
