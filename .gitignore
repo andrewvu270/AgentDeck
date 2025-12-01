@@ -11,6 +11,7 @@ coverage/
 dist/
 build/
 .next/
+.md
 
 # Environment
 .env
