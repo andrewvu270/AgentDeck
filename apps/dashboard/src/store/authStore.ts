@@ -30,10 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   
   register: async (email, password) => {
-    const { data } = await api.post('/auth/register', { email, password });
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    set({ user: data.user, isAuthenticated: true });
+    await api.post('/auth/register', { email, password });
+    // Don't auto-login, let user login manually
   },
   
   logout: () => {

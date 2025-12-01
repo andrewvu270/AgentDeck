@@ -23,8 +23,8 @@ export default function RegisterPage() {
     
     try {
       await register(email, password);
-      toast.success('Account created successfully!');
-      navigate('/agents');
+      toast.success('Account created successfully! Please login.');
+      navigate('/login');
     } catch (error: any) {
       toast.error(error.response?.data?.error?.message || 'Registration failed');
     } finally {

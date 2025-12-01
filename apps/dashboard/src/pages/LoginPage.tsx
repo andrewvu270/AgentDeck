@@ -17,7 +17,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success('Welcome back!');
-      navigate('/agents');
+      navigate('/app');
     } catch (error: any) {
       toast.error(error.response?.data?.error?.message || 'Login failed');
     } finally {
