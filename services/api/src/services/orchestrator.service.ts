@@ -116,6 +116,22 @@ export class OrchestratorService {
     // Get agent
     const agent = await agentService.get(agentId, userId);
 
+    // Get MCP tools if agent has them
+    let mcpTools: any[] = [];
+    if (agent.mcp_tools && agent.mcp_tools.length > 0 && agent.mcp_config_id) {
+      const mcpManagerService = require('./mcp/MCPManagerService').default;
+      const mcpConfig = await mcpManagerService.getMCPConfig(userId);
+      
+      if (mcpConfig) {
+        // Get tool definitions from database
+        const toolsResult = await query(
+          `SELECT * FROM mcp_tools WHERE mcp_config_id = $1 AND name = ANY($2)`,
+          [mcpConfig.id, agent.mcp_tools]
+        );
+        mcpTools = toolsResult.rows;
+      }
+    }
+
     // Get user's API key for this provider
     const apiKeyResult = await query(
       'SELECT encrypted_key FROM api_keys WHERE user_id = $1 AND provider = $2 LIMIT 1',
@@ -136,26 +152,44 @@ export class OrchestratorService {
       throw new Error('Failed to decrypt API key');
     }
     
+    // Prepare tools for LLM (convert MCP tools to OpenAI function format)
+    const llmTools = mcpTools.map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.input_schema,
+      },
+    }));
+    
     // Call LLM API based on provider
     let response: { content: string; tokens: number };
     
     try {
       if (agent.provider === 'openai') {
-        // Call OpenAI API
+        // Call OpenAI API with tools
+        const requestBody: any = {
+          model: agent.model,
+          messages: [
+            { role: 'system', content: context.agentInstructions },
+            ...context.messages
+          ],
+          max_tokens: Math.min(context.remainingTokens, 1000),
+        };
+
+        // Add tools if available
+        if (llmTools.length > 0) {
+          requestBody.tools = llmTools;
+          requestBody.tool_choice = 'auto';
+        }
+
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({
-            model: agent.model,
-            messages: [
-              { role: 'system', content: context.agentInstructions },
-              ...context.messages
-            ],
-            max_tokens: Math.min(context.remainingTokens, 1000),
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!openaiResponse.ok) {
@@ -163,8 +197,40 @@ export class OrchestratorService {
         }
 
         const data: any = await openaiResponse.json();
+        const message = data.choices[0].message;
+
+        // Handle tool calls if present
+        if (message.tool_calls && message.tool_calls.length > 0) {
+          const mcpManagerService = require('./mcp/MCPManagerService').default;
+          const mcpConfig = await mcpManagerService.getMCPConfig(userId);
+          
+          for (const toolCall of message.tool_calls) {
+            const toolName = toolCall.function.name;
+            const toolArgs = JSON.parse(toolCall.function.arguments);
+            
+            try {
+              // Invoke MCP tool
+              const toolResult = await mcpManagerService.invokeTool(mcpConfig, toolName, toolArgs);
+              
+              // Log tool invocation
+              await query(
+                `INSERT INTO mcp_tool_invocations (agent_id, tool_name, parameters, result, status, duration_ms)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [agentId, toolName, JSON.stringify(toolArgs), JSON.stringify(toolResult), 'success', 0]
+              );
+            } catch (error) {
+              console.error(`Tool invocation failed for ${toolName}:`, error);
+              await query(
+                `INSERT INTO mcp_tool_invocations (agent_id, tool_name, parameters, error, status, duration_ms)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [agentId, toolName, JSON.stringify(toolArgs), error instanceof Error ? error.message : 'Unknown error', 'error', 0]
+              );
+            }
+          }
+        }
+
         response = {
-          content: data.choices[0].message.content,
+          content: message.content || 'Tool execution completed',
           tokens: data.usage.total_tokens,
         };
       } else {

@@ -23,6 +23,9 @@ export interface Agent {
   event_subscriptions?: string[];
   status: AgentStatus;
   is_advisor: boolean;
+  // MCP fields
+  mcp_tools?: string[];
+  mcp_config_id?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -54,6 +57,8 @@ export interface CreateAgentInput {
   role_avatar_color?: string;
   event_subscriptions?: string[];
   is_advisor?: boolean;
+  // MCP fields
+  mcpTools?: string[];
 }
 
 export class AgentService {
@@ -139,12 +144,23 @@ export class AgentService {
     // Apply role defaults if role is specified
     const agentInput = await this.applyRoleDefaults(input);
     
+    // Get user's MCP config if MCP tools are specified
+    let mcpConfigId = null;
+    if (agentInput.mcpTools && agentInput.mcpTools.length > 0) {
+      const mcpManagerService = require('./mcp/MCPManagerService').default;
+      const mcpConfig = await mcpManagerService.getMCPConfig(userId);
+      if (mcpConfig) {
+        mcpConfigId = mcpConfig.id;
+      }
+    }
+    
     const result = await query(
       `INSERT INTO agents (
         user_id, name, description, model, provider, system_prompt, tools, config,
-        role_type, role_responsibilities, role_avatar_color, event_subscriptions, is_advisor, status
+        role_type, role_responsibilities, role_avatar_color, event_subscriptions, is_advisor, status,
+        mcp_tools, mcp_config_id
       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        RETURNING *`,
       [
         userId,
@@ -161,6 +177,8 @@ export class AgentService {
         JSON.stringify(agentInput.event_subscriptions || []),
         agentInput.is_advisor || false,
         'online',
+        agentInput.mcpTools || [],
+        mcpConfigId,
       ]
     );
     

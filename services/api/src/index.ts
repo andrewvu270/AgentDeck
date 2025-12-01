@@ -14,6 +14,7 @@ import tiersRoutes from './routes/tiers.routes';
 import workspaceRoutes from './routes/workspace.routes';
 import eventsRoutes from './routes/events.routes';
 import advisorRoutes from './routes/advisor.routes';
+import mcpRoutes from './routes/mcp.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +71,7 @@ app.use('/api/tiers', apiLimiter, tiersRoutes);
 app.use('/api/workspace', apiLimiter, workspaceRoutes);
 app.use('/api/events', apiLimiter, eventsRoutes);
 app.use('/api/advisor', apiLimiter, advisorRoutes);
+app.use('/api/mcp', apiLimiter, mcpRoutes);
 
 // Error handler
 app.use(errorHandler);

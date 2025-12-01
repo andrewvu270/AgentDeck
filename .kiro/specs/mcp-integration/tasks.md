@@ -72,79 +72,79 @@
     - Test MCP config creation, tool discovery, connection validation
     - _Requirements: 1.1, 1.2, 1.3, 3.2, 3.3_
 
-- [ ] 5. Implement Analyzer Agent Service
-  - [ ] 5.1 Create AnalyzerAgentService class
+- [x] 5. Implement Analyzer Agent Service
+  - [x] 5.1 Create AnalyzerAgentService class
     - Implement analyzeOpenAPI, analyzeGraphQL, analyzeRESTDocs methods
     - Implement generateMCPTools, categorizeToolsByRole methods
     - Use LLM (GPT-4 or Claude) for API analysis
     - _Requirements: 2.1, 2.2, 2.3_
   
-  - [ ] 5.2 Create OpenAPI parser integration
+  - [x] 5.2 Create OpenAPI parser integration
     - Use swagger-parser to parse OpenAPI specs
     - Extract endpoints, parameters, responses
     - _Requirements: 2.1_
   
-  - [ ] 5.3 Implement MCP tool generation logic
+  - [x] 5.3 Implement MCP tool generation logic
     - Convert API endpoints to MCP tool definitions
     - Generate JSON schemas for inputs/outputs
     - Categorize tools by role (Dev, QA, Product, etc.)
     - _Requirements: 2.2, 2.3_
   
-  - [ ] 5.4 Write property test for tool generation
+  - [x] 5.4 Write property test for tool generation
     - **Property 2: Analyzer Agent Tool Generation Completeness**
     - **Validates: Requirements 2.2**
   
-  - [ ] 5.5 Write unit tests for Analyzer Agent
+  - [x] 5.5 Write unit tests for Analyzer Agent
     - Test API parsing, tool generation, role categorization
     - Mock LLM responses
     - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ] 6. Create MCP API routes
-  - [ ] 6.1 Create POST /api/mcp/auto-generated endpoint
+- [x] 6. Create MCP API routes
+  - [x] 6.1 Create POST /api/mcp/auto-generated endpoint
     - Accept API documentation
     - Trigger analyzer agent
     - Return generated MCP configuration
     - _Requirements: 1.2, 2.1, 2.2_
   
-  - [ ] 6.2 Create POST /api/mcp/bring-your-own endpoint
+  - [x] 6.2 Create POST /api/mcp/bring-your-own endpoint
     - Accept MCP server URL and credentials
     - Validate connection
     - Discover and store tools
     - _Requirements: 1.3, 3.2, 3.3_
   
-  - [ ] 6.3 Create GET /api/mcp/config endpoint
+  - [x] 6.3 Create GET /api/mcp/config endpoint
     - Return user's current MCP configuration
     - Include mode and available tools
     - _Requirements: 1.5_
   
-  - [ ] 6.4 Create PUT /api/mcp/mode endpoint
+  - [x] 6.4 Create PUT /api/mcp/mode endpoint
     - Switch between auto-generated and BYO modes
     - Preserve existing agents
     - _Requirements: 1.4_
   
-  - [ ] 6.5 Create GET /api/mcp/tools endpoint
+  - [x] 6.5 Create GET /api/mcp/tools endpoint
     - Return available MCP tools
     - Filter by role if specified
     - _Requirements: 4.1_
   
-  - [ ] 6.6 Write integration tests for MCP routes
+  - [x] 6.6 Write integration tests for MCP routes
     - Test all endpoints with valid and invalid inputs
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 3.2, 3.3_
 
-- [ ] 7. Update Agent Service for MCP integration
-  - [ ] 7.1 Update createAgent to accept MCP tools
+- [-] 7. Update Agent Service for MCP integration
+  - [x] 7.1 Update createAgent to accept MCP tools
     - Add mcpTools parameter
     - Validate tools against available MCP tools
     - Store tool access in database
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [ ] 7.2 Update agent execution to use MCP tools
+  - [x] 7.2 Update agent execution to use MCP tools
     - Modify orchestrator to invoke MCP tools
     - Pass tool results back to agent LLM
     - Handle tool invocation errors
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
   
-  - [ ] 7.3 Implement tool invocation logging
+  - [x] 7.3 Implement tool invocation logging
     - Log all MCP tool calls to mcp_tool_invocations table
     - Include parameters, results, duration, errors
     - _Requirements: 6.1, 6.2_
